@@ -42,8 +42,11 @@ const replaceTemplate = (temp, product) => {
     output = output.replace(/{%QUANTITY%}/g, product.quantity);
     output = output.replace(/{%DESCRIPTIOM%}/g, product.description);
     output = output.replace(/{%ID%}/g, product.id);
+    //this contains all of the data to orcgnize on the cards. by placing the place holder (productname, image, price, etc) in / /g,
+    //that ensures that all of the the productnames are pulled and not just the first one in the data.json
 
     if(!product.organic) output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
+    return output;
 }
 
 const tempOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
@@ -52,6 +55,7 @@ const tempProduct = fs.readFileSync(`${__dirname}/templates/template-product.htm
 
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObj = JSON.parse(data);
+//array of objects to loop through
 
 const server = http.createServer((req, res) => {
     const pathName = req.url;
@@ -59,9 +63,15 @@ const server = http.createServer((req, res) => {
     if(pathName === '/' || pathName === '/overview') {
         res.writeHead(200, {'Content-type': 'text/html'});
 
-        const cardsHtml = dataObj.map(el => replaceTemplate(tempCard, el))
-
-        res.end(tempOverview);
+        const cardsHtml = dataObj.map(el => replaceTemplate(tempCard, el)).join('');
+        //loop through data with a .map which will be saved into a new array(cardsHtml) map gets an argument
+        //el (the current element) which will then return data for our new cardsHtml array
+        //create a function to replace the placeholders in each iteration called replaceTemplate which will take in "tempCard" and 
+        //the element "el" which holds the data
+        //by placing .join('') into an empty string, this will join all of the elements into a string
+        const output = tempOverview.replace('{%PRODUCT_CARDS%}', cardsHtml);
+        //tempOverview is the string that holds the html
+        res.end(output);
 
 //Product page
     } else if (pathName === '/product'){
